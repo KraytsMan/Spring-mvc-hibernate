@@ -1,0 +1,60 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+         http://www.springframework.org/schema/data/jpa
+         http://www.springframework.org/schema/data/jpa/spring-jpa.xsd
+          http://www.springframework.org/schema/tx
+           http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <import resource="env-context.xml"/>
+
+    <bean id="ldDataSource"
+          class="com.jolbox.bonecp.BoneCPDataSource"
+          destroy-method="close"
+          p:driverClass="${jdbc.driverClassName}"
+          p:jdbcUrl="${jdbc.url}"
+          p:user="${jdbc.user}"
+          p:password="${jdbc.password}"
+          p:idleMaxAgeInMinutes="240"
+          p:idleConnectionTestPeriodInMinutes="60"
+          p:acquireIncrement="10"
+          p:maxConnectionsPerPartition="60"
+          p:minConnectionsPerPartition="20"
+          p:statementsCacheSize="50"/>
+
+    <!-- Declare a JPA entityManagerFactory-->
+    <bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+        <property name="persistenceXmlLocation" value="WEB-INF/persistence.xml"/>
+        <property name="persistenceUnitName" value="hibernatePersistenceUnit"/>
+        <property name="dataSource" ref="ldDataSource"/>
+        <property name="jpaVendorAdapter">
+            <bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter"/>
+        </property>
+        <property name="jpaPropertyMap">
+            <map>
+                <entry key="hibernate.hbm2ddl.auto" value="${hibernate.hbm2ddl}"/>
+                <entry key="hibernate.show_sql" value="${hibernate.show.sql}"/>
+                <entry key="hibernate.dialect" value="${hibernate.dialect}"/>
+                <entry key="hibernate.connection.CharSet" value="${hibernate.connection.CharSet}"/>
+                <entry key="hibernate.connection.characterEncoding" value="${hibernate.connection.characterEncoding}"/>
+            </map>
+        </property>
+    </bean>
+
+    <!-- Declare a transaction manager-->
+    <bean id="entityTransactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+        <property name="entityManagerFactory" ref="entityManagerFactory"/>
+    </bean>
+
+    <jpa:repositories base-package="softjourn.spring.mvc.example"
+                      entity-manager-factory-ref="entityManagerFactory"
+
+                      transaction-manager-ref="entityTransactionManager"/>
+
+    <tx:annotation-driven transaction-manager="entityTransactionManager"/>
+
+</beans>
